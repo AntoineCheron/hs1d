@@ -127,7 +127,7 @@ class SpaceDiscretization(object):
         self.dx_edges = self.x_edges[1:]-self.x_edges[0:-1]
         return self.dx_edges
 
-    def compute_dx_node(self):
+    def get_dx_node(self):
         # length(dxS) = Nx - 1
         self.dx_node = self.x_node[1:]-self.x_node[0:-1]
         return self.dx_node
@@ -156,7 +156,7 @@ class SpaceDiscretization(object):
         self.b = np.append(temp, a, axis=0) #+ np.zeros(((len(self.x) - 1),1))
         self.b = np.append(self.b, temp, axis=0)
 #        #B = [zeros(1, length(obj.x) - 1); A; zeros(1, length(obj.x) - 1)];
-        dx_node = self.compute_dx_node(),
+        dx_node = self.get_dx_node(),
         dx_node = np.hstack((0, np.squeeze(dx_node), 0))
         self.b = np.dot(np.diag(1/dx_node), self.b)
         self.b[np.isnan(self.b)] = 0
@@ -172,7 +172,7 @@ class SpaceDiscretization(object):
         #       [ 0  ... ...  ...   0  - 1    1 ]
         #       size A = (Nx) x(Nx + 1)
         #########################################
-        self.dx_edges = self.compute_dx_edges()
+        self.dx_edges = self.get_dx_edges()
         self.a = -np.eye(len(self.x_edges)-1)
         temp = np.zeros(((len(self.x_edges)-1), 1))
         self.a = np.hstack((self.a, temp))
@@ -211,4 +211,3 @@ class SpaceDiscretization(object):
         self.omega2 = copy.copy(self.b)
         self.omega2[self.omega2 < 0] = 0
         return self.omega2
-

@@ -108,7 +108,7 @@ class BoussinesqSimulation(object):
         self.SD = SD.SpaceDiscretization(Morpho.xmin, Morpho.xmax, Morpho.nx, Morpho.discretization_type, Morpho.x_custom, \
                                          Morpho.angle, Morpho.w, Geol.soil_depth, Geol.k, Geol.f, Morpho.z_custom)
 
-        #Get width and soild_depth over each node
+        #Get width and soild_depth over each node TODO Change it to get the desired values
         self.SD.resample_hs1D_spatial_variables()
 
         #Set Hydraulic Properties

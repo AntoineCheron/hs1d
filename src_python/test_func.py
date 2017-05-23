@@ -62,7 +62,7 @@ if bouss != 0:
     if plot_options !=0 :
         fig1 = plt.figure(num =1)
         ax1 = fig1.gca(projection = '3d')
-        X = A.SD.compute_x_node()
+        X = A.SD.get_x_node()
         Y = A.SR.t
         X,Y = np.meshgrid(X,Y)
         surf = ax1.plot_surface(X,Y,S_sol,rstride=1,cstride=1,cmap=cm.coolwarm,linewidth=0,antialiased=False)
@@ -78,7 +78,7 @@ if bouss != 0:
     #
     #    fig3 = plt.figure(num=3)
     #    ax3 = fig3.gca(projection = '3d')
-    #    X = A.SD.compute_x_node()
+    #    X = A.SD.get_x_node()
     #    Y = A.t_res
     #    X,Y = np.meshgrid(X,Y)
     #    surf = ax3.plot_surface(X,Y,QS_sol,cmap=cm.coolwarm,linewidth=0,antialiased=False)
@@ -134,7 +134,7 @@ if modflow !=0:
         ax10.plot(TEST.stock[3300,90:99])
 #    fig5 = plt.figure(num =5)
 #    ax5 = fig1.gca(projection = '3d')
-#    X = A.SD.compute_x_node()
+#    X = A.SD.get_x_node()
 #    Y = A.SR.t
 #    X,Y = np.meshgrid(X,Y)
 #    surf = ax5.plot_surface(X,Y,diff_S,rstride=1,cstride=1,cmap=cm.coolwarm,linewidth=0,antialiased=False)
