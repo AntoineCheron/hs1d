@@ -1,4 +1,5 @@
-import TimeProperties as TP
+from Model import TimePropertiesUtils as TP
+from Model import TimeUnit as TU
 import numpy as np
 
 class Source(object):
@@ -29,61 +30,55 @@ class Source(object):
 
   def __init__(self, period, recharge_type, recharge_rate, tmin, tmax, Nt, unit, time_custom):
       self.recharge_type = recharge_type
-      self.TP = TP.TimeProperties(tmin, tmax, Nt, unit, time_custom)
-      self.tmax = self.TP.TU.time_to_seconds(tmax)
-      self.period = period
-      self.period = self.source_terms()
-      self.set_recharge_chronicle(recharge_rate)
+      self.t, self.tmax, self.tmin = TP.time_properties(tmin, tmax, Nt, unit, time_custom)
+      self.period = self.source_terms(period, recharge_type)
+      self.set_recharge_chronicle(self.recharge_rate, self.period)
 
-  def source_terms(self):
+  def source_terms(self, period, recharge_type):
 
-      if self.recharge_type == 'periodical' or self.recharge_type == 'square':
-          if self.period is None:
-              self.period = self.TP.TU.time_to_seconds(5)
+      if recharge_type == 'periodical' or recharge_type == 'square':
+          if period is None:
+              return TU.time_to_seconds(5)
 
-      elif self.recharge_type == 'steady' or self.recharge_type is None:
-          self.period = 'inf'
+      elif recharge_type == 'steady' or echarge_type is None:
+          return 'inf'
 
-      elif self.recharge_type == 'random':
-            self.period = 0
+      elif recharge_type == 'random':
+          return 0
 
-      elif self.recharge_type == 'databased':
-          self.period = -1
+      elif recharge_type == 'databased':
+          return -1
 
       return self.period
 
-  def set_recharge_chronicle(self, recharge_rate):
+  def set_recharge_chronicle(self, recharge_rate, period, t):
 
   #        print('time=',self.TP.t)
-      if self.period == 'inf' or self.period is None:
+      if period == 'inf' or period is None:
           recharge_rate = (recharge_rate*10**-3)/86400
-          self.recharge_rate = recharge_rate
+          return recharge_rate*np.ones(t)
 
-          self.recharge_chronicle = self.recharge_rate*np.ones(self.TP.t)
+      elif period == 0:
+          return self.set_random_recharge()
 
-      elif self.period == 0:
-          self.recharge_chronicle = self.set_random_recharge()
-
-      elif self.period == -1:
-          self.recharge_chronicle = recharge_rate
+      elif period == -1:
+          return recharge_rate
 
       else:
           recharge_rate = (recharge_rate*10**-3)/86400
-          self.recharge_rate = recharge_rate
-          if self.recharge_type == 'periodical':
-              self.recharge_chronicle = self.recharge_rate*(1+np.cos(2*np.pi*(self.TP.t/self.period)))
-          elif self.recharge_type == 'square':
-              Int_ = np.floor(self.TP.t/self.period)
+          if recharge_type == 'periodical':
+              return recharge_rate*(1+np.cos(2*np.pi*(t/period)))
+          elif recharge_type == 'square':
+              Int_ = np.floor(t/period)
               Odd_rest = Int_%2
-              self.recharge_chronicle = self.recharge_rate*Odd_rest
-              rem_stiff = self.TP.t%(2*self.period)
+              recharge_chronicle = recharge_rate*Odd_rest
+              rem_stiff = t%(2*period)
               bool1 = rem_stiff < 60
-              self.recharge_chronicle[bool1] = self.recharge_rate*(1-(rem_stiff[bool1])/60)
-              rem_stiff = (self.TP.t + self.period)%(2*self.period)
+              recharge_chronicle[bool1] = recharge_rate*(1-(rem_stiff[bool1])/60)
+              rem_stiff = (t + period)%(2*period)
               bool1 = rem_stiff < 60
-              self.recharge_chronicle[bool1] = self.recharge_rate*((rem_stiff[bool1])/60)
-
-      return self.recharge_chronicle
+              recharge_chronicle[bool1] = recharge_rate*((rem_stiff[bool1])/60)
+              return recharge_chronicle
 
     def get_t(self):
         return self.t

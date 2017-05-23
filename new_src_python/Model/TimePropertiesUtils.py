@@ -28,7 +28,6 @@ def time_properties(tmin=0, tmax=35, Nt=35*24*10, unit='days', time_custom=-1):
         Creates a time vector in sec, based on tmin, tmax and Nt (after
         conversion from unit to seconds)
     """
-    TU = TU.TimeUnit(tmax, unit)
 
     # Convert tmax and tmin to seconds
     tmax = TU.time_to_seconds(tmax)
@@ -39,4 +38,4 @@ def time_properties(tmin=0, tmax=35, Nt=35*24*10, unit='days', time_custom=-1):
         t = np.reshape(t,(len(t),1))
     else :
         t = TU.time_to_seconds(time_custom)
-    return t
+    return t, tmax, tmin
