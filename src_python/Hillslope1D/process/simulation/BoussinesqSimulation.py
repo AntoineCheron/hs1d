@@ -358,7 +358,7 @@ class BoussinesqSimulation(object):
         global bouss_obj
         bouss_obj = self
         # Computation of the initial state
-        yd0 = f(self.So.TP.t[0], y0)
+        yd0 = f(t[0], y0)
 
         #Build the DAE problem to solve
         self.model = Implicit_Problem(BoussinesqSimulation.res, y0, yd0, t[0])

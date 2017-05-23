@@ -1,7 +1,7 @@
 import numpy as np
 
 """
-    File defining boundary conditions in xmin and xmax as S, Q or free
+    Library defining boundary conditions in xmin and xmax as S, Q or free
     (imposed head,impose flux or free). This properties are stored in two 2
     valued arrays containing boundary types and boundary values. First
     Boundary condition is located downstream (on the river) and the other
