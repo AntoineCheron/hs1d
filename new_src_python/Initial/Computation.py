@@ -21,18 +21,20 @@ def compute_q_from_s(y, k, f, SD, HS, BC):
     ## put boundary conditions on Q in the matrix
     q_from_s[0, :] = (1-BC.edges_bool[2])*q_from_s[0, :]
     q_from_s[SD.N_nodes, :] = (1-BC.edges_bool[3])*q_from_s[SD.N_nodes, :]
-    
+
     return q_from_s
 
-def compute_qs_from_q(y, t, alpha, SD):
+def compute_qs_from_q(y, t, f, SD, HS,  recharge):
     """
         Compute Seepage in each cell (over nodes) based  on flow rate and
         conversion matrices
     """
+    alpha = compute_alpha(y, t, f, SD, HS, recharge)
     alpha_complementar = np.diag(1 - alpha[:, 0])
     qs_from_q = np.dot(-alpha_complementar, SD.a)
 
     return qs_from_q
+
 
 def compute_alpha(y, t, f, SD, HS, recharge):
     """
@@ -48,11 +50,23 @@ def compute_alpha(y, t, f, SD, HS, recharge):
     alpha =  z * test_deriv + (1 - test_deriv)
     return alpha
 
-def compute_dsdt_from_q(y, t, alpha, beta, SD):
+def compute_beta(SD):
+    """
+        compute a matrix defining variations over time. Used to compute Q,
+        S and QS
+    """
+    beta = np.ones((SD.N_nodes, 1))
+#        y_new = y[0:N_nodes] <= 0
+#        beta=1-(1-self.test_derivative(y,t))*y_new
+    return beta
+
+def compute_dsdt_from_q(y, t, f, SD, HS, recharge):
     """
         Compute stock variation between two time steps based on flow rate and
         conversion matrices
     """
+    alpha = np.diag(np.squeeze(compute_alpha(y, t, f, SD, HS, recharge)))
+    beta = -np.diag(np.squeeze(compute_beta(y,t)))
     dsdt_from_q = np.dot(np.dot(-np.diag(beta), np.diag(alpha)),SD.a)
 
     return dsdt_from_q
@@ -63,7 +77,7 @@ def test_derivative(y, t, SD, HS, recharge):
         Test to determine if stock is still positive and seepage is occuring
         or not
     """
-    
+
     recharge_rate_spatialized = recharge*np.reshape(SD.w_node, (len(SD.w_node), 1))
 
     test_deriv = np.dot(-SD.a, y[SD.N_nodes: SD.N_nodes + HS.N_edges]) + recharge_rate_spatialized
@@ -96,3 +110,10 @@ def compute_recharge_rate(t, t_chronicle, recharge_type, period, recharge_chroni
         if bool1 is True:
             recharge = recharge_chronicle*((rem_stiff)/60)
     return recharge
+
+def thresholdfunction(x)
+    y = 1 - np.exp(-1000*(1-x))
+    if np.sum(x>1)>0:
+        coord = np.where(x>1)
+        y[coord] = 0
+    return(y)

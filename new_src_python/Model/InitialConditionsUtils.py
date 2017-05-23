@@ -7,11 +7,14 @@ Created on Tue May 23 10:27:08 2017
 import numpy as np
 from Initial import Computation
 
-def compute_Smax(f, w, soil_depth):
-    Smax = f*np.reshape(w,(len(w),1)) * np.reshape(soil_depth,(len(soil_depth),1))
+def compute_Smax(f, SD, soil_depth):
+
+    Smax = f * np.reshape(SD.w_node,(len(SD.w_node),1)) * np.reshape(soil_depth,(len(soil_depth),1))
+
     return Smax
 
 def compute_sin(percentage_loaded, Smax, Init, BC):
+
     if isinstance(Init, int):
         percentage_loaded = percentage_loaded
         if isinstance(percentage_loaded, float) or isinstance(percentage_loaded, int):
@@ -21,16 +24,17 @@ def compute_sin(percentage_loaded, Smax, Init, BC):
         sup = np.where(sin>Smax)
         sin[sup[0]] = Smax[sup[0]]
     else:
-        sin = np.reshape(Init.sin, (len(Init.sin),1))
-    
+        sin = np.reshape(Init.Sin, (len(Init.Sin),1))
+
     sin[0] = BC.edges_bool[0] * BC.edges[0] + (1 - BC.edges_bool[0]) * sin[0]
     sin[-1] = BC.edges_bool[1] * BC.edges[1] + (1 - BC.edges_bool[1]) * sin[-1]
+
     return sin
 
-def compute_qin(sin, f, k, angle_edges, BC, SD, Init=0):
+def compute_qin(sin, f, k, BC, SD, HS, Init=0):
+
     if isinstance(Init, int):
-        qin = np.dot(Computation.compute_q_from_s(sin), sin)
-    
+        qin = np.dot(Computation.compute_q_from_s(sink, f, SD, HS, BC), sin)
         ## put boundary conditions on Q in the matrix
         qin[0, :] = (1-BC.edges[2])*qin[0, :]
         qin[SD.N_nodes, :] = (1-BC.edges[3])*qin[SD.N_nodes, :]
@@ -38,6 +42,19 @@ def compute_qin(sin, f, k, angle_edges, BC, SD, Init=0):
         qin[-1] = BC.edges_bool[3] * BC.edges[3] + [1 - BC.edges_bool[3]] * qin[-1]
     else:
         qin = np.reshape(Init.Qin, (len(Init.Qin),1))
+
     return qin
-    
-def compute_q_sin()
+
+def compute_q_sin(sin, qin, t, f, SD, HS, recharge, Init=0):
+
+    if isinstance(Init, int):
+        q_sin = np.dot(Computation.compute_qs_from_q(np.vstack((sin, \
+                        qin, np.zeros((len(qin), 1)))), t[0]), \
+                        qin)
+    else:
+        q_sin = Init.QSin
+
+    temp = np.where(q_sin<0)
+    q_sin[temp[0],temp[1]] = 0
+
+    return q_sin

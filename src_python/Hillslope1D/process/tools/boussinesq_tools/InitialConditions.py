@@ -1,20 +1,25 @@
 import numpy as np
-
+from Model import InitialConditionsUtils as ICU
+from Initial import Computation as CPT
 
 class InitialConditions(object):
 
-    def __init__(self, percentage_loaded, w, soil_depth, f, Init):
+    def __init__(self, percentage_loaded,  soil_depth, f, BC, SD, HS, SO, Init=0):
 
-      self.Smax = f *np.reshape(w,(len(w),1)) * np.reshape(soil_depth,(len(soil_depth),1))
-      if isinstance(Init, int):
-        self.percentage_loaded = percentage_loaded
-        if isinstance(percentage_loaded, float) or isinstance(percentage_loaded, int):
-            self.sin = percentage_loaded * np.reshape(self.Smax, (len(self.Smax), 1))
-        else:
-            self.sin = np.reshape(self.percentage_loaded,(len(self.percentage_loaded),1)) * np.reshape(self.Smax, (len(self.Smax), 1))
-        sup = np.where(self.sin>self.Smax)
-        self.sin[sup[0]] = self.Smax[sup[0]]
-      else:
-        self.sin = np.reshape(Init.Sin, (len(Init.Sin),1))
-        self.qin = np.reshape(Init.Qin, (len(Init.Qin),1))
-        self.q_sin = np.reshape(Init.QSin, (len(Init.QSin),1))
+      self.recharge_rate = CPT.compute_recharge_rate(SO.t[0], SO.t, SO.recharge_type, SO.period, SO.recharge_chronicle)
+      self.Smax = ICU.compute_Smax(f, SD, soil_depth)
+      self.sin = ICU.compute_sin(percentage_loaded, self.Smax, BC, Init)
+      self.qin = ICU.compute_qin(self.sin, f, k , BC, SD, HS, Init)
+      self.q_sin = ICU.compute_q_sin(self.sin, self.qin, SO.t, f, SD, HS, self.recharge_rate, Init)
+
+    def get_sin():
+        return self.sin
+
+    def get_qin():
+        return self.qin
+
+    def get_q_sin():
+        return self.q_sin
+
+    def get_Smax():
+        return self.Smax

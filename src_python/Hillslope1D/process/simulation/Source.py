@@ -85,31 +85,8 @@ class Source(object):
 
       return self.recharge_chronicle
 
-  def compute_recharge_rate(self, t):
-    if self.period == 'inf':
-        self.recharge = self.recharge_rate
+    def get_t(self):
+        return self.t
 
-    elif self.period == 0:
-        self.t_chronicle = self.TP.time_properties()
-
-        self.recharge = np.interp(t, self.t_chronicle, self.recharge_chronicle)
-
-    elif self.period == -1:
-        self.t_chronicle = self.TP.t
-        self.recharge = np.interp(t, self.t_chronicle, self.recharge_chronicle)
-
-    elif self.recharge_type == 'periodical':
-        self.recharge = self.recharge_rate*(1+np.cos(2*np.pi*(t/self.period)))
-    elif self.recharge_type == 'square':
-        Int_ = np.floor(t/self.period)
-        Odd_rest = Int_%2
-        recharge = self.recharge_rate*Odd_rest
-        rem_stiff = t%(2*self.period)
-        bool1 = rem_stiff < 60
-        if bool1 is True:
-            self.recharge = self.recharge_rate*(1-(rem_stiff)/60)
-        rem_stiff = (t + self.period)%(2*self.period)
-        bool1 = rem_stiff < 60
-        if bool1 is True:
-            self.recharge = self.recharge_rate*((rem_stiff)/60)
-    return self.recharge
+    def get_recharge(self):
+        return self.recharge_chronicle
