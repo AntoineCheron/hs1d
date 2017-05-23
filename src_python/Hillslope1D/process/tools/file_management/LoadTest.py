@@ -34,6 +34,7 @@ class LoadTest(object):
         self.Smax = self.load_ref_values("Smax", folder)
         self.w_node = self.load_ref_values("width_S", folder)
         self.w_edges = self.load_ref_values("width_Q", folder)
+        self.Q_hs = self.load_ref_values("Q_hillslope", folder)
 
     def load_ref_values(self, var, folder):
         file = folder + "/" + var

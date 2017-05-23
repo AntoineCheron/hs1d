@@ -39,7 +39,7 @@ class BoussinesqSimulation(object):
                    z_custom, w (geometry : spatial aspect)
         - Hydro : tmin, tmax, Nt, unit, recharge_rate, time_custom, period,
                   recharge_type, perc_loaded (temporal aspect)
-
+		- Init : Sin, Qin, Qsin if a previous initial state was computed
 
             WARNING ! ALL CALCULATIONS ARE DONE IN M/S
 
@@ -86,7 +86,7 @@ class BoussinesqSimulation(object):
 #                 Morpho.z_custom=-1, Morpho.angle=0, w=0, soil_depth=0, k=1/3600, f=0.3, \
 #                 Id=1, percentage_loaded=0):
 
-    def __init__(self, Morpho, Geol, Hydro, Id):
+    def __init__(self, Morpho, Geol, Hydro, Init=0, Id='Test'):
         #List of INPUTS
         #1st row : INPUT for Source
         #2nd row : INPUT for Source.TimeProperties
@@ -95,6 +95,7 @@ class BoussinesqSimulation(object):
         #5th row : INPUT for SpaceDiscretization.Hs1D
         #6th row : INPUT for InitialConditions
         Morpho.xmax = Morpho.xmax+Morpho.xmax/Morpho.nx
+
         if not isinstance(Morpho.x_custom, int):
             Morpho.nx = np.size(Morpho.x_custom) - 1
             Morpho.xmax = np.max(Morpho.x_custom)
@@ -121,7 +122,7 @@ class BoussinesqSimulation(object):
 
         #Build Initial Conditions
         self.set_initial_conditions(percentage_loaded=Hydro.perc_loaded, w=self.SD.w_node, \
-                                    soil_depth=self.SD.soil_depth_node, f=self.SD.Hs.f)
+                                    soil_depth=self.SD.soil_depth_node, f=self.SD.Hs.f, Init=Init)
 
         #Identification of the hillslope
         self.Id = Id
@@ -129,12 +130,12 @@ class BoussinesqSimulation(object):
         #Mass Matrix of the DAE
         self.m = self.compute_mass_matrix()
 
-    def set_initial_conditions(self, percentage_loaded, w, soil_depth, f):
+    def set_initial_conditions(self, percentage_loaded, w, soil_depth, f, Init):
         """
             Set initial conditions of stock and flow over the hillslope based
             on percentage_loaded and boundary conditions
         """
-        self.IC = IC.InitialConditions(percentage_loaded, w, soil_depth, f)
+        self.IC = IC.InitialConditions(percentage_loaded, w, soil_depth, f, Init)
 
         boundary = self.BC
         edges = boundary.fixed_edge_matrix_values()
@@ -410,7 +411,7 @@ class BoussinesqSimulation(object):
         Q_sol = self.SR.Q
         QS_sol = self.SR.QS
         #Computation of the outgoing flow of the hillslope (m3/s)
-        self.Q_hs = -self.SR.Q[1:,1] + np.sum(np.abs(self.SR.QS[1:,:]),1)* + self.So.recharge_chronicle*self.SD.w_node[0][0]*self.SD.dx_edges[0][0]
+        self.Q_hs = np.sum(self.SR.QS,1)
 
         #Save Stock integration results
         name_file = folder + "/S"
@@ -460,5 +461,3 @@ class BoussinesqSimulation(object):
         name_file = folder +"/Q_hillslope"
         with open(name_file, "wb") as f:
             np.savetxt(f, self.Q_hs, fmt='%1.12e', delimiter="\t", newline='\n')
-
-

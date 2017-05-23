@@ -31,10 +31,13 @@ class TimeProperties(object):
         self.unit = unit
         self.TU = TU.TimeUnit(tmax,unit)
         self.tmax = self.TU.time_to_seconds(tmax)
+        self.tmin = self.TU.time_to_seconds(tmin)
         if isinstance(time_custom,int):
             self.time_properties()
         else:
+            time_custom = self.TU.time_to_seconds(time_custom)
             self.t = time_custom
+           
 
     def time_properties(self):
         """

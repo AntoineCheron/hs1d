@@ -1,0 +1,4 @@
+https://anaconda.org/chria/assimulo/2.9/download/win-64/assimulo-2.9-py35_0.tar.bz2
+https://binstar-cio-packages-prod.s3.amazonaws.com/win-64_assimulo-2.9-py35_0.tar.bz2 (access denied)
+https://pkgs.fedoraproject.org/cgit/rpms/python-assimulo.git/snapshot/python-assimulo-8622110e17a15cfd37f384d860f502e97dfb8f38.zip
+https://pkgs.fedoraproject.org/python-assimulo-cb9addb85e10e1d30350bec10da3fd102be13467.tar

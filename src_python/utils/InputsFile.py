@@ -14,12 +14,10 @@ class InputsFile(object):
             - inputs_list : a list containing the path to each file to load
     """
 
-    def __init__(self, inputs_list, interp):
+    def __init__(self, inputs_list):
         self.f, self.k, self.soil_depth = self.load_geol(inputs_list[0])
         self.time, self.recharge_chronicle = self.load_hydro(inputs_list[1])
         self.x, self.w, self.i, self.z_true, self.z_mod = self.load_morpho(inputs_list[2])
-        if interp != 0:
-            self.x_interp, self.w_interp, self.Smax_interp = self.load_spatial(inputs_list[3])
 
         #Reformating matrices and changing units
         self.k = self.k/3600                                   #from m/h to m/s

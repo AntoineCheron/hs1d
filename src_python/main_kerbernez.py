@@ -23,55 +23,73 @@ import GeologicInputs as GI
 import HydrologicInputs as HI
 import MorphologicInputs as MI
 import BoussinesqSimulation as BS
-import matplotlib.pyplot as plt
-import LoadTest as LT
+import InitialState as IS 
+import SaveInitial as SI
+import BilanCheck as BC
 
 """Building of a list of hillslopes"""
 ###############################################################################
 #Flags and input parameters definition
+watershed_name = 'Kerbernez'
+#watershed_name = 'Kerbernez_mono'
 
 #Definition of the flag used to specify the test case
 flag = 4
 cst = False
 out_put = 0
-interp = 0
 initial_state = 1
 #Definition of folder and name for custom cases (if needed, set flag to 4)
 src_path = os.getcwd()
 if "\\" in src_path:
     src_path = src_path.replace("\\", "/")
 
-watershed_path = src_path[:-10] + 'test_case/matlab/Kerbernez/'
+watershed_path = src_path[:-10] + 'test_case/matlab/' + watershed_name + '/'
 list_dir = os.listdir(watershed_path)
+
+#Check if there is one or more hillslopes
+fold_ex = False
+for i in range(len(list_dir)):
+    if os.path.isdir(watershed_path + '/' + list_dir[i]) is True:
+        fold_ex = True
 
 cst_name = []
 cst_folder = []
 var_name =  []
 var_folder = []
-for i in range(len(list_dir)):
-    temp = list_dir[i]
-    if temp[-3:] == 'cst':
-        cst_name.append(temp)
-        cst_folder.append("Kerbernez/"+temp)
-    elif temp[-3:] == 'var':
-        var_name.append(temp)
-        var_folder.append("Kerbernez/"+temp)
-    else:
-        print("Trouble reading watershed's folders")
 
-if cst == True:
-    custom_folder = cst_folder
-    name_custom = cst_name
-    print(len(cst_name),' hillslopes found and loaded')
+#Build a list of hillslopes if there are many hillslopes
+if fold_ex is True:
+    for i in range(len(list_dir)):
+        temp = list_dir[i]
+        if temp[-3:] == 'cst':
+            cst_name.append(temp)
+            cst_folder.append(watershed_name + "/"+temp)
+        elif temp[-3:] == 'var':
+            var_name.append(temp)
+            var_folder.append(watershed_name + "/"+temp)
+        else:
+            print("Trouble reading watershed's folders")
+            
+    if cst == True:
+        custom_folder = cst_folder
+        name_custom = cst_name
+        print(len(cst_name),' hillslopes found and loaded')
+    else:
+        custom_folder = var_folder
+        name_custom = var_name
+        print(len(var_name),' hillslopes found and loaded')
 else:
-    custom_folder = var_folder
-    name_custom = var_name
-    print(len(var_name),' hillslopes found and loaded')
+    name_custom = [watershed_name]
+    custom_folder = [watershed_name + '/']
 #Output option for BoussinesqSimulation results
 output = 1
 
 #Plot options for vizualisation of results
 plot_option = 1
+6
+if not os.path.exists(os.getcwd() + '/simulation_results'):
+    os.makedirs(os.getcwd() + '/simulation_results')
+    print('Folder for all simulation results saving created')
 
 ###############################################################################
 """Compute initial state for all hillslopes"""
@@ -80,18 +98,19 @@ if initial_state != 0:
     success = np.zeros((len(name_custom),1))
     for i in range(len(name_custom)):
         #Reading the test case and importing data
-        TestCase = LCT.LoadCasTest(flag, custom_folder[i], name_custom[i], out_put, interp)
+        TestCase = LCT.LoadCasTest(flag, custom_folder[i], name_custom[i], out_put)
         print("Test Case ", i, " files loaded")
-
-        perc = 0.0
+        if not os.path.exists(os.getcwd() + '/simulation_results/' + TestCase.name):
+          os.makedirs(os.getcwd() + '/simulation_results/' + TestCase.name)
+          print('Output folder created for the simulated Hillslope')
+        perc = 0.2
         z=-1
         rec = []
-        for j in range(100000):
-            rec.append(np.mean(TestCase.input.recharge_chronicle[119:838]))
+        for j in range(5000):
+            rec.append(np.mean(np.abs(TestCase.input.recharge_chronicle[0:5])))
         rec = np.reshape(rec,(1, len(rec)))
         TestCase.input.recharge_chronicle = rec[0]
-        TestCase.input.time = np.arange(100000) * 3600
-
+        TestCase.input.time = np.arange(5000)
         #Building Model inputs
         Morpho = MI.MorphologicInputs(nx=len(TestCase.input.x), discretization_type='custom',\
                                       x_custom = TestCase.input.x, angle=TestCase.input.i, \
@@ -100,7 +119,7 @@ if initial_state != 0:
         Geol = GI.GeologicInputs(k=TestCase.input.k, f=TestCase.input.f, soil_depth=TestCase.input.soil_depth)
 
         Hydro = HI.HydrologicInputs(recharge_rate=TestCase.input.recharge_chronicle, time_custom=TestCase.input.time, \
-                                    recharge_type='databased',perc_loaded=perc, unit = 'hour')
+                                    recharge_type='databased',perc_loaded=perc, unit = 'days')
 
         #Creating the BoussinesqSimulation model using Model Inputs
         Simulation = BS.BoussinesqSimulation(Morpho, Geol, Hydro, Id=TestCase.name)
@@ -116,29 +135,13 @@ if initial_state != 0:
 
     ###############################################################################
         #Output of the simulation
-
-        #Building output files
         if success[i] == 1:
-            if not os.path.exists(os.getcwd() + '/simulation_results'):
-                os.makedirs(os.getcwd() + '/simulation_results')
-                print('Folder for all simulation results saving created')
+          save_init = SI.SaveInitial(result=Simulation.SR, name=TestCase.name, folder=os.getcwd())
+          print("Initial State Saved")
+        if i == 0:
+          Simu_init = Simulation
 
-            if not os.path.exists(os.getcwd() + '/simulation_results/' + TestCase.name):
-                os.makedirs(os.getcwd() + '/simulation_results/' + TestCase.name)
-                print('Output folder created for the simulated Hillslope')
-
-            out_folder = os.getcwd() + '/simulation_results/' + TestCase.name
-            file = out_folder + "/" + TestCase.name + "_init"
-            with open(file,"wb") as f:
-                np.savetxt(f, Simulation.SR.S[-1,:], fmt='%1.8e', delimiter="\t", newline='\n')
-            file = out_folder + "/" + TestCase.name + "_Smax"
-            with open(file,"wb") as f:
-                np.savetxt(f, Simulation.IC.Smax, fmt='%1.8e', delimiter="\t", newline='\n')
-            print('Simulation ', i, ' initial state saved\n')
-        else:
-            print('Simulation ', i, ' failed, no state saved\n')
         Simulation = 0
-
 print('\n Runing the model\n')
 "Loading all hillslopes"
 ###############################################################################
@@ -146,45 +149,27 @@ print('\n Runing the model\n')
 success = np.zeros((len(name_custom),1))
 for i in range(len(name_custom)):
     #Reading the test case and importing data
-    TestCase = LCT.LoadCasTest(flag, custom_folder[i], name_custom[i], out_put, interp)
+    TestCase = LCT.LoadCasTest(flag, custom_folder[i], name_custom[i], out_put)
     print("Test Case ", i, " files loaded")
 
     z = -1
-    if out_put != 0:
-        if np.size(TestCase.input.x)-1 == np.size(TestCase.output.storage[:,0]):
-            print("using saved initial state")
-            perc = TestCase.output.perc_storage[:,0]/100
-            z = np.reshape(TestCase.input.z_mod,(len(TestCase.input.z_mod),1))
-        else:
-            print("using default inital state")
-            perc = 0.5
+    if os.path.exists(os.getcwd() + '/simulation_results/'+ TestCase.name + '/Sin'):
+      Init = IS.InitialState(TestCase.name, os.getcwd())
     else:
-        folder = os.getcwd() + '/simulation_results/' + name_custom[i] + "/" + name_custom[i]
-        if os.path.exists(folder + "_init"):
-            temp_init = np.loadtxt(folder + "_init")
-            temp_Smax = np.loadtxt(folder + "_Smax")
-            perc = np.reshape(temp_init, (len(temp_init),1))/np.reshape(temp_Smax, (len(temp_Smax),1))
-        else:
-            perc = 0.5
+      Init = 0
+      perc = 0.5
     #Building Model inputs
-    rec_temp = np.matlib.repmat(TestCase.input.recharge_chronicle[119:838],1,10)
-    rec_temp = rec_temp[0]
-    t_temp = np.squeeze(np.zeros((1, len(rec_temp))))
-    for j in range(len(rec_temp)):
-        t_temp[j] = j*3600
-    TestCase.input.recharge_chronicle = rec_temp
-    TestCase.input.time = t_temp
     Morpho = MI.MorphologicInputs(nx=len(TestCase.input.x), discretization_type='custom',\
                                   x_custom = TestCase.input.x, angle=TestCase.input.i, \
                                   z_custom = z, w = TestCase.input.w)
 
     Geol = GI.GeologicInputs(k=TestCase.input.k, f=TestCase.input.f, soil_depth=TestCase.input.soil_depth)
 
-    Hydro = HI.HydrologicInputs(recharge_rate=TestCase.input.recharge_chronicle, time_custom=TestCase.input.time, \
-                                recharge_type='databased',perc_loaded=perc)
+    Hydro = HI.HydrologicInputs(recharge_rate=np.abs(TestCase.input.recharge_chronicle), time_custom=TestCase.input.time, \
+                                recharge_type='databased',perc_loaded=perc, unit='days')
 
     #Creating the BoussinesqSimulation model using Model Inputs
-    Simulation = BS.BoussinesqSimulation(Morpho, Geol, Hydro, Id=TestCase.name)
+    Simulation = BS.BoussinesqSimulation(Morpho, Geol, Hydro, Init, Id=TestCase.name)
     print("Model built")
 
     #Running BoussinesqSimulation model
@@ -207,11 +192,19 @@ for i in range(len(name_custom)):
                 os.makedirs(os.getcwd() + '/simulation_results')
                 print('Folder for all simulation results saving created')
 
-            if not os.path.exists(os.getcwd() + '/simulation_results/' + TestCase.name):
-                os.makedirs(os.getcwd() + '/simulation_results/' + TestCase.name)
-                print('Output folder created for the simulated Hillslope')
+            if fold_ex is True:
+                if not os.path.exists(os.getcwd() + '/simulation_results/' + watershed_name + '/' + TestCase.name):
+                    os.makedirs(os.getcwd() + '/simulation_results/' + watershed_name + '/' + TestCase.name)
+                    print('Output folder created for the simulated Hillslope')
+                out_folder = os.getcwd() + '/simulation_results/' + watershed_name + '/' + TestCase.name
+            else:
+                if not os.path.exists(os.getcwd() + '/simulation_results/' + TestCase.name):
+                    os.makedirs(os.getcwd() + '/simulation_results/' + TestCase.name)
+                    print('Output folder created for the simulated Hillslope')
+                out_folder = os.getcwd() + '/simulation_results/' + TestCase.name
+                
 
-            out_folder = os.getcwd() + '/simulation_results/' + TestCase.name
+            
             Simulation.output_simu(out_folder)
             print('Simulation ', i, ' results saved')
         else:
@@ -219,51 +212,7 @@ for i in range(len(name_custom)):
     Simulation = 0
 
 ###############################################################################
-#Loading all results
-Simu = []
-for i in range(len(name_custom)):
-    if success[i] == 1:
-        folder = os.getcwd() + '/simulation_results/' + name_custom[i]
-        Simul_load = LT.LoadTest(folder)
-        Simu.append(Simul_load)
-    else:
-        Simu.append(0)
-
-
-#Ploting results
-if plot_option != 0:
-    Q_riv = 0
-    surf = []
-    recharge = []
-    for i in range(len(name_custom)):
-        if success[i] == 1:
-            temp = Simu[i]
-            Q_riv = Q_riv + np.abs(temp.Q[:,1]) - np.abs(temp.QS[:,0])*5 + np.sum(temp.QS*5,1)
-            surf_temp = np.trapz(np.reshape(temp.w_edges,(1,len(temp.w_edges))), np.reshape(temp.x_Q,(1,len(temp.x_Q))))
-            surf.append(surf_temp)
-            rec = TestCase.input.recharge_chronicle
-    recharge.append(np.trapz(np.reshape(rec,(1,len(rec))), np.reshape(temp.t_res[1:],(1,len(temp.t_res)-1))))
-
-    plt.figure(6)
-    plt.plot(Simu[0].t_res, Q_riv)
-    plt.ylabel('Q river (m3/s)')
-    plt.xlabel('Time (s)')
-    plt.title('Flowrate a the outlet as a function of time')
-    plt.grid(True)
-    plt.show()
-
-    Q_r = np.trapz(np.reshape(Q_riv,(1,len(Q_riv))), np.reshape(Simu[0].t_res, (1, len(Simu[0].t_res))))
-    print('Total volume through the outlet : ', float(Q_r), ' m3 over ', int((Simu[0].t_res[-1]+1)/86400), ' days')
-    print('Total Surface of the watershed is : ', np.sum(surf), ' m²')
-    print('Total Volume In is : ', np.sum(recharge) * np.sum(surf), ' m3 over 35 d')
+#Loading all results and computing Water Balance
+Bilan = BC.BilanCheck(name_custom, success, "")
+ 
 ###############################################################################
-
-plt.figure(num=42)
-for i in range(len(Simu)):
-    plt.plot(Simu[i].x_Q,Simu[i].w_edges)
-plt.show()
-
-
-surf_temp = []
-for i in range(len(Simu)):
-    surf_temp.append(np.sum(Simu[i].w_edges)*10)

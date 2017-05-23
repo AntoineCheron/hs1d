@@ -58,7 +58,7 @@ class ModflowModel1D(object):
     """
 
 
-    def __init__(self, nlay=1, ncol=1, nrow=20, ntime=35, unit='day', hk=1, sy=0.3, \
+    def __init__(self, nlay=1, ncol=1, nrow=100, ntime=35, unit='day', hk=1, sy=0.3, \
                  soil_depth=2, alpha=0.05, Lx=500, Ly=100, nper=10*24, \
                  model_name='BoussinesqEvaluation', percentage_loaded=0.8, \
                  xcustom=-1, recharge_custom=-1, top_custom=-1, bot_custom=-1, strt=-1, std=False):

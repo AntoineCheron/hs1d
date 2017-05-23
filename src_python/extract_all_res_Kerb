@@ -1,0 +1,11 @@
+%% Extracting results and processing them on Hs1D 3 hillslopes, Hs1D 1 equivalent
+%% hillslope, MM2D
+
+%Extract Hs1S 1 equivalent hillslope
+[Q_eq, surf_eq, out_eq, in_eq, stor_eq, perc_eq, t_eq] = extract_hs1d('Kerbernez_mono');
+
+%Extract Hs1D 3 hillslopes
+[Q_tr, surf_tr, out_tr, in_tr, stor_tr, perc_tr, t_tr] = extract_hs1d('Kerbernez',1)
+
+%Extract MM2D
+[Q_mod, t_mod] = extract_mod('Kerbernez');

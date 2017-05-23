@@ -23,9 +23,9 @@ class TimeUnit(object):
             Conversion between each time unit to seconds
         """
         sec_in_min = 60
-        sec_in_hour = sec_in_min*60
-        sec_in_day = sec_in_hour*24
-        sec_in_year = sec_in_day*365
+        sec_in_hour = 3600
+        sec_in_day = 86400
+        sec_in_year = 86400*365
 
         if self.unit == '':
             self.unit = ('enter time units - seconds, minutes, days, year')

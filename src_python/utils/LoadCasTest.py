@@ -37,7 +37,7 @@ class LoadCasTest(object):
 
     """
 
-    def __init__(self, flag=0, custom_path="", name_custom="", output=0, interp=0):
+    def __init__(self, flag=0, custom_path="", name_custom="", output=0):
 
         #Setting the folder's path for the example
         test_path, self.name = self.set_path(flag, custom_path, name_custom)
@@ -50,7 +50,7 @@ class LoadCasTest(object):
             self.set_outputs(test_path)
 
         #Load inputs
-        self.input = IF.InputsFile(self.inputs_list, interp)
+        self.input = IF.InputsFile(self.inputs_list)
 
         #Load outputs
         if output != 0:
@@ -93,8 +93,7 @@ class LoadCasTest(object):
         geol_file = test_path + 'geologic.input'
         hydro_file = test_path + 'hydrologic.input'
         morpho_file = test_path + 'morphologic.input'
-        spatial_param = test_path + 'key_spatialized_param.param'
-        self.inputs_list = [geol_file, hydro_file, morpho_file, spatial_param]
+        self.inputs_list = [geol_file, hydro_file, morpho_file]
 
     def set_outputs(self, test_path):
         """

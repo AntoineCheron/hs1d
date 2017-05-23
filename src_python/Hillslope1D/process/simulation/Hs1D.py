@@ -7,7 +7,7 @@ class Hs1D(object):
         Class containing the hillslope properties. It's an attribute of
         SpaceDiscretization Class
         #######################################################################
-        @☺param
+        @param
             xmin : minimal coordinate of the hillslope (in meters)
             xmax : maximal coordinate of the hillslope (in meters)
             nx : number of meshes used to describe the hillslope

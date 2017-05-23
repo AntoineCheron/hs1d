@@ -257,8 +257,8 @@ class ModflowModel2D(object):
                 bound_sp[i] = bound
         else:
             for i in range(self.nper):
-                conductance = self.hk * (self.ztop[self.outlet_y, self.outlet_x] - \
-                                         self.zbot[self.outlet_y, self.outlet_x]) * self.delr/self.delc * 1000000
+                conductance = self.hk*self.delr*self.delc / (self.ztop[self.outlet_y, self.outlet_x] - \
+                                         self.zbot[self.outlet_y, self.outlet_x])
                 bound = [0, self.outlet_y, self.outlet_x, self.ztop[self.outlet_y, self.outlet_x], conductance]
                 bound_sp[i] = bound
         return bound_sp
@@ -284,13 +284,12 @@ class ModflowModel2D(object):
         flopy.modflow.ModflowDis(mf, self.nlay, self.nrow, self.ncol, delr=self.delr, \
                                  delc=self.delc, top=self.ztop, botm=self.zbot, \
                                  nper=self.nper, perlen=self.perlen, nstp=nstp, \
-                                 steady=steady, itmuni=3, lenuni=2)
-        flopy.modflow.ModflowBas(mf, ibound=self.ibound, strt=strt, stoper=10)
-        flopy.modflow.mfupw.ModflowUpw(mf, laytyp=1, hk=self.hk, sy=self.sy, ss=self.ss)
-        flopy.modflow.ModflowNwt(mf, Continue=True, maxiterout=1000, linmeth=2, mxiterxmd=500)
+                                 steady=steady, itmuni=4, lenuni=2)
+        flopy.modflow.ModflowBas(mf, ibound=self.ibound, strt=strt)
+        flopy.modflow.mfupw.ModflowUpw(mf, laytyp=1, hk=self.hk, sy=self.sy, ss=self.ss, vka = self.hk)
+        flopy.modflow.ModflowNwt(mf, Continue=True, maxiterout=1000, linmeth=1, headtol=10**-4, fluxtol=500)
         flopy.modflow.ModflowRch(mf, nrchop=3, rech=rech)
         flopy.modflow.ModflowDrn(mf, stress_period_data=self.lrcec)
-#        flopy.modflow.ModflowGhb(mf, stress_period_data=self.bound_sp)
 
         spd = {}
         for i in range(self.nper):
@@ -303,7 +302,7 @@ class ModflowModel2D(object):
             Run the model using modflow 2005
         """
         mf.write_input()
-        success, mfoutput = mf.run_model(silent=False, pause=False, report=False)
+        success, mfoutput = mf.run_model(silent=False, pause=False, report=True)
         if not success:
             raise Exception('MODFLOW did not terminate normally.')
 
@@ -321,28 +320,41 @@ class ModflowModel2D(object):
         temp = np.zeros((self.nrow, self.ncol))
         temp = np.squeeze(temporary[time_select,:,:])
         piezo = temp
-
-        mf_list = flopy.utils.MfListBudget(model_name + ".list", timeunit='hours')
+        
+        temporary[np.where(temporary < 0)] = 0
+        stor = np.zeros((np.size(temporary,0),1))        
+        for i in range(np.size(temporary,0)):
+            stor[i] = np.sum(np.squeeze(temporary[i,:,:]))            
+        
+        mf_list = flopy.utils.MfListBudget(model_name + ".list", timeunit='days')
         drain = []
         perc_disc = []
         for i in range(1,self.nper+1):
             data = mf_list.get_data(totim=i)
             drain.append(data[7])
             perc_disc.append(data[11])
-
+        
         drain_tot = []
+        perc = []
         for i in range(self.nper):
             drain_tot.append(drain[i][1])
+            perc.append(perc_disc[i][1])
 
         drain_tot = [0] + drain_tot
         drain_val = -np.diff(drain_tot)
-
+        perc = np.array(perc)
         name_file = os.getcwd() + "/" + model_name + "/" + model_name + "_piezometry"
         with open(name_file,"wb") as f:
             np.savetxt(f,piezo, fmt='%1.8e', delimiter="\t", newline='\n')
         name_file = os.getcwd() + "/" + model_name + "/" + model_name + "_drain"
         with open(name_file,"wb") as f:
             np.savetxt(f,drain_val, fmt='%1.8e', delimiter="\t", newline='\n')
+        name_file = os.getcwd() + "/" + model_name + "/" + model_name + "_storage"
+        with open(name_file,"wb") as f:
+            np.savetxt(f,stor, fmt='%1.8e', delimiter="\t", newline='\n')
+        name_file = os.getcwd() + "/" + model_name + "/" + model_name + "_perc_disc"
+        with open(name_file,"wb") as f:
+            np.savetxt(f,perc, fmt='%1.8e', delimiter="\t", newline='\n')
         return piezo
 
     def init_output(self, model_name):
@@ -361,7 +373,7 @@ class ModflowModel2D(object):
         temp = np.squeeze(temporary[-1,:,:])
 #        temp[0, self.outlet_y, self.outlet_x,] = self.strt[0, self.outlet_y, self.outlet_x]
 #        piezo = np.squeeze(temp)
-        mf_list = flopy.utils.MfListBudget(model_name + ".list", timeunit='hours')
+        mf_list = flopy.utils.MfListBudget(model_name + ".list", timeunit='days')
         self.list = mf_list
         drain = []
         perc_disc = []
@@ -390,7 +402,7 @@ class ModflowModel2D(object):
 
     def plot_output(self, model_name, watershed, hydro):
         print("Ploting output")
-        mf_list = flopy.utils.MfListBudget(model_name + ".list", timeunit='hours')
+        mf_list = flopy.utils.MfListBudget(model_name + ".list", timeunit='days')
         self.list = mf_list
         drain = []
         perc_disc = []
@@ -406,13 +418,13 @@ class ModflowModel2D(object):
         drain_tot = [0] + drain_tot
         drain_val = -np.diff(drain_tot)
 
-        plt.figure(2)
-        plt.plot(drain_val)
-        plt.ylabel('drain (m3/d)')
-        plt.xlabel('Time (h)')
-        plt.title('Flowrate a the outlet as a function of time')
-        plt.grid(True)
-        plt.show()
+#        plt.figure(2)
+#        plt.plot(drain_val)
+#        plt.ylabel('drain (m3/d)')
+#        plt.xlabel('Time (h)')
+#        plt.title('Flowrate a the outlet as a function of time')
+#        plt.grid(True)
+#        plt.show()
 
 #        plt.figure(3)
 #        plt.plot(head_out_val)
@@ -422,21 +434,21 @@ class ModflowModel2D(object):
 #        plt.grid(True)
 #        plt.show()
 
-        plt.figure(4)
-        plt.plot((drain_val)/3600)
-        plt.ylabel('Total out flow (m3/d)')
-        plt.xlabel('Time (h)')
-        plt.title('Flowrate a the outlet as a function of time')
-        plt.grid(True)
-        plt.show()
-
-        plt.figure(5)
-        plt.plot(perc_disc)
-        plt.ylabel('Percent discrepancy')
-        plt.xlabel('Time (h)')
-        plt.title('Percent discrepancy as a function of time')
-        plt.grid(True)
-        plt.show()
+#        plt.figure(4)
+#        plt.plot((drain_val)/3600)
+#        plt.ylabel('Total out flow (m3/d)')
+#        plt.xlabel('Time (h)')
+#        plt.title('Flowrate a the outlet as a function of time')
+#        plt.grid(True)
+#        plt.show()
+#
+#        plt.figure(5)
+#        plt.plot(perc_disc)
+#        plt.ylabel('Percent discrepancy')
+#        plt.xlabel('Time (h)')
+#        plt.title('Percent discrepancy as a function of time')
+#        plt.grid(True)
+#        plt.show()
 
         self.t_res = np.arange(len(drain_val))
         self.Q_r =  drain_val
