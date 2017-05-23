@@ -80,8 +80,18 @@ class Source(object):
               recharge_chronicle[bool1] = recharge_rate*((rem_stiff[bool1])/60)
               return recharge_chronicle
 
+    ###########################################################################
+    #                               GETTERS                                   #
+    ###########################################################################
+
     def get_t(self):
         return self.t
 
     def get_recharge(self):
         return self.recharge_chronicle
+
+    def get_recharge_type(self):
+        return self.recharge_type
+
+    def get_period(self):
+        return self.period

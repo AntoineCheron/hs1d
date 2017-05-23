@@ -7,9 +7,9 @@ Created on Tue May 23 10:27:08 2017
 import numpy as np
 from Initial import Computation
 
-def compute_Smax(f, SD, soil_depth):
+def compute_Smax(f, SD):
 
-    Smax = f * np.reshape(SD.w_node,(len(SD.w_node),1)) * np.reshape(soil_depth,(len(soil_depth),1))
+    Smax = f * np.reshape(SD.w_node,(len(SD.w_node),1)) * np.reshape(SD.soil_depth_node,(len(SD.soil_depth_node),1))
 
     return Smax
 

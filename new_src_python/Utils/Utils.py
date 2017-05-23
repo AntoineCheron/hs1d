@@ -1,0 +1,2 @@
+def createEmptyObject() :
+    return type('', (), {})()

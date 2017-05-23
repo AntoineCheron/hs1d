@@ -4,10 +4,10 @@ from Initial import Computation as CPT
 
 class InitialConditions(object):
 
-    def __init__(self, percentage_loaded,  soil_depth, f, BC, SD, HS, SO, Init=0):
+    def __init__(self, percentage_loaded, f, BC, SD, HS, SO, Init=0):
 
       self.recharge_rate = CPT.compute_recharge_rate(SO.t[0], SO.t, SO.recharge_type, SO.period, SO.recharge_chronicle)
-      self.Smax = ICU.compute_Smax(f, SD, soil_depth)
+      self.Smax = ICU.compute_Smax(f, SD)
       self.sin = ICU.compute_sin(percentage_loaded, self.Smax, BC, Init)
       self.qin = ICU.compute_qin(self.sin, f, k , BC, SD, HS, Init)
       self.q_sin = ICU.compute_q_sin(self.sin, self.qin, SO.t, f, SD, HS, self.recharge_rate, Init)
