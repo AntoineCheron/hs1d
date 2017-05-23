@@ -103,11 +103,6 @@ class SpaceDiscretization(object):
         self.x_node = (self.x_edges[1:] + self.x_edges[0:-1])/2
         return self.x_node
 
-    def get_dx_edges(self):
-        # length(dx) = Nx
-        self.dx_edges = self.x_edges[1:]-self.x_edges[0:-1]
-        return self.dx_edges
-
     def get_dx_node(self):
         # length(dxS) = Nx - 1
         self.dx_node = self.x_node[1:]-self.x_node[0:-1]

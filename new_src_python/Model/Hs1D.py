@@ -28,6 +28,8 @@ class Hs1D(object):
     def __init__(self, nx, angle, w, soil_depth, k, f, z_custom, x):
         #Extracting angle, w, x and soil_depth
 
+        self.x_edges = x
+
         if isinstance(z_custom,int):
             if isinstance(angle, int) or isinstance(angle, float):
                 if angle == 0:
@@ -95,3 +97,11 @@ class Hs1D(object):
 
     def get_f(self):
         return self.f
+
+    def get_N_edges(self):
+        return len(self.x_edges)
+
+    def get_dx_edges(self):
+        # length(dx) = Nx
+        self.dx_edges = self.x_edges[1:]-self.x_edges[0:-1]
+        return self.dx_edges

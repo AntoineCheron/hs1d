@@ -44,14 +44,18 @@ def process(Morpho, Geol, Hydro, Init=0, Id='Test'):
     SD.dx_node = SD_object.get_dx_node()
 
     # Retrieve the Hs1D object
-    Hs1D = SD.get_hs1d()
-
-    #Set Hydraulic Properties
-    k = Hs1D.get_k()
-    f = Hs1D.get_f()
+    HS = SD.get_hs1d()
+    Hs1D = Utils.createEmptyObject()
+    Hs1D.w_edges = HS.get_w_edges()
+    Hs1D.soil_depth_edges = HS.get_soil_depth_edges()
+    Hs1D.angle_edges = HS.get_angle_edges()
+    Hs1D.k = HS.get_k()
+    Hs1D.f = HS.get_f()
+    Hs1D.N_edges = HS.get_N_edges()
+    Hs1D.dx_edges = HS.get_dx_edges()
 
     #Build Boundary Conditions
-    h0 = f*SD.w_node[0]*SD.soil_depth_node[0]
+    h0 = Hs1D.f*SD.w_node[0]*SD.soil_depth_node[0]
     Geol.boundary_value[0] = h0
 
     # Create the SpaceDiscretization object, containing all the data that
@@ -61,7 +65,7 @@ def process(Morpho, Geol, Hydro, Init=0, Id='Test'):
     BC.edges = BCU.fixed_edge_matrix_values(Geol.boundary_type, Geol.boundary_value)
 
     #Build Initial Conditions
-    IC_object = ICU.InitialConditions(Hydro.perc_loaded, f, BC, SD, Hs1D, SO, Init)
+    IC_object = ICU.InitialConditions(Hydro.perc_loaded, Hs1D.f, BC, SD, Hs1D, SO, Init)
     IC = Utils.createEmptyObject()
     IC.sin = IC_object.get_sin()
     IC.qin = IC_object.get_qin()
@@ -75,4 +79,4 @@ def process(Morpho, Geol, Hydro, Init=0, Id='Test'):
     m = BS.compute_mass_matrix()
 
     # Give all the var we want to Simulate
-    return Morpho, Geol, Hydro, Init, Id, SO, SD, k, f, ho, BC, IC, m
+    return Morpho, Geol, Hydro, Init, Id, SO, SD, Hs1D, ho, BC, IC, m
