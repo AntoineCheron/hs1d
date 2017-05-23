@@ -1,0 +1,11 @@
+src_python/modflow/Laita
+src_python/modflow/Odet
+src_python/modflow/Vilaine
+src_python/modflow/Kerbernez
+src_python/modflow/2017_1_31_9_15_18_X_straight_Y_1_slopcst_Real2
+src_python/modflow/regular_watershed
+src_python/modflow/straight_1m
+src_python/modflow/straight_5m
+src_python/modflow/straight_watershed_1D
+src_python/modflow/straight_watershed_1D_init
+__pycache__
