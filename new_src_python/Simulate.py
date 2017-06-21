@@ -1,10 +1,15 @@
 # The inputs in this file will be the Raw-data from the block
 # and the Model
 # Geol Morpho Hydro Init Id
-import Pre-processing as PreProc
+import Pre_processing as PreProc
 from Simulation import BoussinesqSimulation as BS
+from Simulation import SimulationResults as SR
 from Utils import Utils
+import numpy as np
 
+
+
+#Preprocessing to build the Simulation
 Morpho, Geol, Hydro, Init, Id, SO, SD, Hs1D, ho, BC, IC, m = PreProc.process(Morpho, Geol, Hydro, Init, Id)
 
 # Make SD, Hs1D, SO and BC global to use them into the solver
@@ -15,9 +20,8 @@ globalObject.SO = SO
 globalObject.BC = BC
 global globalObject
 
-"""
-    Resolution of the DAE using implicit problem solver DAE
-"""
+###############################################################################
+#Resolution of the Simulation
 #Building initial state
 y0 = np.vstack((IC.sin, IC.qin, IC.q_sin))
 y0 = np.squeeze(np.reshape(y0, (len(y0), 1)))

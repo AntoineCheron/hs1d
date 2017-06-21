@@ -24,19 +24,19 @@ def compute_q_from_s(y, k, f, SD, HS, BC):
 
     return q_from_s
 
-def compute_qs_from_q(y, t, f, SD, HS,  recharge):
+def compute_qs_from_q(y, t, f, SD, HS,  So):
     """
         Compute Seepage in each cell (over nodes) based  on flow rate and
         conversion matrices
     """
-    alpha = compute_alpha(y, t, f, SD, HS, recharge)
+    alpha = compute_alpha(y, t, f, SD, HS, So)
     alpha_complementar = np.diag(1 - alpha[:, 0])
     qs_from_q = np.dot(-alpha_complementar, SD.a)
 
     return qs_from_q
 
 
-def compute_alpha(y, t, f, SD, HS, recharge):
+def compute_alpha(y, t, f, SD, HS, So):
     """
         compute a matrix defining variations over time. Used to compute Q,
         S and QS
@@ -46,7 +46,7 @@ def compute_alpha(y, t, f, SD, HS, recharge):
                                          (len(SD.soil_depth_node), 1))
     xt = y[0:SD.N_nodes]/(f* SD.soil_depth_node * SD.w_node)
     z = thresholdfunction(xt)
-    test_deriv = test_derivative(y, t, SD, HS, recharge)
+    test_deriv = test_derivative(y, t, SD, HS, So)
     alpha =  z * test_deriv + (1 - test_deriv)
     return alpha
 
@@ -60,24 +60,24 @@ def compute_beta(SD):
 #        beta=1-(1-self.test_derivative(y,t))*y_new
     return beta
 
-def compute_dsdt_from_q(y, t, f, SD, HS, recharge):
+def compute_dsdt_from_q(y, t, f, SD, HS, So):
     """
         Compute stock variation between two time steps based on flow rate and
         conversion matrices
     """
-    alpha = np.diag(np.squeeze(compute_alpha(y, t, f, SD, HS, recharge)))
-    beta = -np.diag(np.squeeze(compute_beta(y,t)))
+    alpha = np.diag(np.squeeze(compute_alpha(y, t, f, SD, HS, So)))
+    beta = -np.diag(np.squeeze(compute_beta(SD)))
     dsdt_from_q = np.dot(np.dot(-np.diag(beta), np.diag(alpha)),SD.a)
 
     return dsdt_from_q
 
 
-def test_derivative(y, t, SD, HS, recharge):
+def test_derivative(y, t, SD, HS, So):
     """
         Test to determine if stock is still positive and seepage is occuring
         or not
     """
-
+    recharge = compute_recharge_rate(t, So.t, So.recharge_type, So.period, So.recharge_chronicle )
     recharge_rate_spatialized = recharge*np.reshape(SD.w_node, (len(SD.w_node), 1))
 
     test_deriv = np.dot(-SD.a, y[SD.N_nodes: SD.N_nodes + HS.N_edges]) + recharge_rate_spatialized
@@ -111,7 +111,7 @@ def compute_recharge_rate(t, t_chronicle, recharge_type, period, recharge_chroni
             recharge = recharge_chronicle*((rem_stiff)/60)
     return recharge
 
-def thresholdfunction(x)
+def thresholdfunction(x):
     y = 1 - np.exp(-1000*(1-x))
     if np.sum(x>1)>0:
         coord = np.where(x>1)

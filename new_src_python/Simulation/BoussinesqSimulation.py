@@ -1,10 +1,9 @@
 import numpy as np
 from Model import Source as So
-from Model import BoundaryConditionsUtils as BC
 from Model import SpaceDiscretization as SD
 from Model import InitialConditions as IC
 from Initial import Computation
-import SimulationResults as SR
+from Simulation import SimulationResults as SR
 from assimulo.problem import Implicit_Problem
 from assimulo.solvers.sundials import IDA
 
@@ -89,8 +88,8 @@ def res(t, y, yd):
     dy_new = np.dot(compute_c(y, t, globalObject.SD, globalObject.Hs1D.k, \
                     globalObject.Hs1D.f, globalObject.Hs1D, globalObject.SO, \
                     globalObject.BC), y) + compute_source_terms(y, t, \
-                    globalObject.SD, globalObject.Hs1D, globalObject.SO)
-    res = np.dot(m, yd) - np.reshape(dy_new, (len(dy_new), 1))
+                    globalObject.SD, globalObject.Hs1D, globalObject.SO, globalObject.BC)
+    res = np.dot(globalObject.m, yd) - np.reshape(dy_new, (len(dy_new), 1))
     res = np.squeeze(np.reshape(res, (len(res), 1)))
     return res
 
@@ -103,12 +102,12 @@ def rhs(t, y):
     ##########################################
     y = np.reshape(y, (len(y), 1))
     c = compute_c(y, t, globalObject.SD, globalObject.Hs1D.k, globalObject.Hs1D.f, globalObject.Hs1D, globalObject.SO, globalObject.BC)
-    d = compute_source_terms(y, t, globalObject.SD, globalObject.Hs1D, globalObject.SO)
+    d = compute_source_terms(y, t, globalObject.SD, globalObject.Hs1D, globalObject.SO, globalObject.BC)
     dy = np.dot(c, y)+d
     dy = np.squeeze(np.reshape(dy, (np.size(dy), 1)))
     return dy
 
-def compute_c(self, y, t, SD, k, f, Hs1D, SO, BC):
+def compute_c(y, t, SD, k, f, Hs1D, SO, BC):
     """
         Compute a part of the DAE base on S, Q and QS values
     """
@@ -120,9 +119,9 @@ def compute_c(self, y, t, SD, k, f, Hs1D, SO, BC):
 
     c = np.zeros((2 * SD.N_nodes + Hs1D.N_edges, 2 * SD.N_nodes + Hs1D.N_edges))
 
-    dsdt_from_q = Computation.compute_dsdt_from_q(y, t, f, SD, Hs1D, SO.recharge_chronicle)
+    dsdt_from_q = Computation.compute_dsdt_from_q(y, t, f, SD, Hs1D, SO)
     q_from_s = Computation.compute_q_from_s(y, k, f, SD, Hs1D, BC)
-    qs_from_q = Computation.compute_qs_from_q(y, t, f, SD, Hs1D, SO.recharge_chronicle)
+    qs_from_q = Computation.compute_qs_from_q(y, t, f, SD, Hs1D, SO)
 
         # first row block
     c[0:SD.N_nodes, 0:SD.N_nodes]                                          = 0
@@ -146,14 +145,14 @@ def compute_c(self, y, t, SD, k, f, Hs1D, SO, BC):
     return c
 
 
-def compute_source_terms(self, y, t, SD, Hs1D, SO):
+def compute_source_terms(y, t, SD, Hs1D, SO, BC):
     """
         compute the recharge for a time step on each cell based on recharge
         defined by user
     """
     #Matrix describing source term (recharge)
     d = np.zeros((2*SD.N_nodes + Hs1D.N_edges, 1))
-    alpha = Computation.compute_alpha(y, t, Hs1D.f, SD, Hs1D, SO.recharge_chronicle)
+    alpha = Computation.compute_alpha(y, t, Hs1D.f, SD, Hs1D, SO)
     beta = Computation.compute_beta(SD)
     Recharge_rate = Computation.compute_recharge_rate(t, SO.t, SO.recharge_type, SO.period, SO.recharge_chronicle)
     Recharge_rate_spatialized = Recharge_rate * SD.w_node
@@ -174,7 +173,7 @@ def compute_source_terms(self, y, t, SD, Hs1D, SO):
     return d
 
 
-def compute_mass_matrix(self, Hs1D, SD):
+def compute_mass_matrix(Hs1D, SD):
     """
         Compute the matrix m of the DAE
     """
@@ -183,6 +182,10 @@ def compute_mass_matrix(self, Hs1D, SD):
     m = np.zeros((n_unknowns, n_unknowns))
     m[0:SD.N_nodes, 0:SD.N_nodes] = np.eye(SD.N_nodes)
     return m
+
+def set_global(gO):
+    global globalObject
+    globalObject = gO
 
 def output_simu(self, folder, SO, SR, Hs1D, IC):
     """

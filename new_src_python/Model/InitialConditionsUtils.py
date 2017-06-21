@@ -34,7 +34,7 @@ def compute_sin(percentage_loaded, Smax, Init, BC):
 def compute_qin(sin, f, k, BC, SD, HS, Init=0):
 
     if isinstance(Init, int):
-        qin = np.dot(Computation.compute_q_from_s(sink, f, SD, HS, BC), sin)
+        qin = np.dot(-Computation.compute_q_from_s(sin, k, f, SD, HS, BC), sin)
         ## put boundary conditions on Q in the matrix
         qin[0, :] = (1-BC.edges[2])*qin[0, :]
         qin[SD.N_nodes, :] = (1-BC.edges[3])*qin[SD.N_nodes, :]
@@ -45,11 +45,11 @@ def compute_qin(sin, f, k, BC, SD, HS, Init=0):
 
     return qin
 
-def compute_q_sin(sin, qin, t, f, SD, HS, recharge, Init=0):
+def compute_q_sin(sin, qin, t, f, SD, HS, So, Init=0):
 
     if isinstance(Init, int):
         q_sin = np.dot(Computation.compute_qs_from_q(np.vstack((sin, \
-                        qin, np.zeros((len(qin), 1)))), t[0]), \
+                        qin, np.zeros((len(qin), 1)))), t[0], f, SD, HS, So), \
                         qin)
     else:
         q_sin = Init.QSin

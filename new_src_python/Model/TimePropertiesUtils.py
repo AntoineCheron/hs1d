@@ -1,5 +1,5 @@
 import numpy as np
-import TimeUnit as TU
+from Model import TimeUnit as TU
 
 """
     Properties management for time (unit and values) used to describe the
@@ -30,12 +30,12 @@ def time_properties(tmin=0, tmax=35, Nt=35*24*10, unit='days', time_custom=-1):
     """
 
     # Convert tmax and tmin to seconds
-    tmax = TU.time_to_seconds(tmax)
-    tmin = TU.time_to_seconds(tmin)
+    tmax = TU.time_to_seconds(tmax,unit)
+    tmin = TU.time_to_seconds(tmin,unit)
 
     if isinstance(time_custom, int):
         t = np.arange(tmin, tmax, (tmax-tmin)/(Nt-1))
         t = np.reshape(t,(len(t),1))
     else :
-        t = TU.time_to_seconds(time_custom)
+        t = TU.time_to_seconds(time_custom,unit)
     return t, tmax, tmin

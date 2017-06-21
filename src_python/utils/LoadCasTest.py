@@ -64,7 +64,7 @@ class LoadCasTest(object):
         if "\\" in src_path:
             src_path = src_path.replace("\\", "/")
 
-        test_path = src_path[:-10] + 'test_case/matlab/'
+        test_path = src_path[:-14] + 'test_case/matlab/'
 
         if flag == 0:
             test_path = test_path + '2017_1_31_8_48_45_X_conv_Y_7_slopcst_Synthetic2/'

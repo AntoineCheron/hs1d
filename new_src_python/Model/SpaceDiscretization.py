@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.interpolate import UnivariateSpline
-import Hs1D as Hs
+from Model import Hs1D as Hs
 import copy
 
 class SpaceDiscretization(object):
@@ -51,7 +51,7 @@ class SpaceDiscretization(object):
         self.xmax = xmax
         self.xcustom = x_custom
         self.discretization_type = discretization_type
-        self.x_edges, self.N_edges, self.xmin, self.xmax = self.space_discretization(discretization_type, xmin, xmax, N_edges, xcustom)
+        self.x_edges, self.N_edges, self.xmin, self.xmax = self.space_discretization(discretization_type, xmin, xmax, x_custom)
         self.Hs = Hs.Hs1D(nx, angle, w, soil_depth, k, f, z_custom, self.x_edges)
         self.x_node = self.get_x_node()
         self.a, self.b, self.omega, self.omega2 = self.get_matrix_properties()
@@ -88,15 +88,15 @@ class SpaceDiscretization(object):
         return self.omega2
 
     def get_angle_node(self):
-        w_node, angle_node, soil_depth_node = resample_hs1D_spatial_variables()
+        w_node, angle_node, soil_depth_node = self.resample_hs1D_spatial_variables()
         return angle_node
 
     def get_w_node(self):
-        w_node, angle_node, soil_depth_node = resample_hs1D_spatial_variables()
+        w_node, angle_node, soil_depth_node = self.resample_hs1D_spatial_variables()
         return w_node
 
     def get_soil_depth_node(self):
-        w_node, angle_node, soil_depth_node = resample_hs1D_spatial_variables()
+        w_node, angle_node, soil_depth_node = self.resample_hs1D_spatial_variables()
         return soil_depth_node
 
     def get_x_node(self):
@@ -107,16 +107,27 @@ class SpaceDiscretization(object):
         # length(dxS) = Nx - 1
         self.dx_node = self.x_node[1:]-self.x_node[0:-1]
         return self.dx_node
+    
+    def get_dx_edges(self):
+        self.dx_edges = self.x_edges[1:] - self.x_edges[0:-1]
+        return self.dx_edges
+    
+    def get_N_nodes(self):
+        return len(self.x_node)
+    
+    def get_N_edges(self):
+        return len(self.x_edges)
 
     ###########################################################################
     #                           CUSTOM METHODS                                #
     ###########################################################################
 
 
-    def space_discretization(self, discretization, xmin, xmax, N_edges, xcustom):
+    def space_discretization(self, discretization, xmin, xmax, xcustom):
         # Create the variable that will be returned at the end
         x_edges = None
         N_nodes = None
+        N_edges = None
 
         if discretization == 'linear':
             x_edges = np.arange(xmin, xmax, (xmax - xmin) / N_edges)
@@ -159,8 +170,8 @@ class SpaceDiscretization(object):
     def get_matrix_properties(self):
         a = self.first_derivative_downstream()
         b = self.first_derivative_upstream()
-        omega = self.weight_matrix()
-        omega2 = self.weight_matrix_bis()
+        omega = self.weight_matrix(b)
+        omega2 = self.weight_matrix_bis(b)
         return (a, b, omega, omega2)
 
 
@@ -234,13 +245,13 @@ class SpaceDiscretization(object):
 
         return c
 
-    def weight_matrix(self):
-        omega = copy.copy(self.b)
+    def weight_matrix(self,b):
+        omega = copy.copy(b)
         omega[(omega > 0)] = 0.5
         omega[(omega < 0)] = 0.5
         return omega
 
-    def weight_matrix_bis(self):
-        omega2 = copy.copy(self.b)
+    def weight_matrix_bis(self,b):
+        omega2 = copy.copy(b)
         omega2[omega2 < 0] = 0
         return omega2

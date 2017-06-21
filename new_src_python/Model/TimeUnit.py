@@ -1,5 +1,5 @@
 """
-    Class managing the conversion between time units dor the calculation
+    Module managing the conversion between time units dor the calculation
     ######################################################################
     @param
       tmax : the maximal time of the timeserie
@@ -12,7 +12,7 @@
     ######################################################################
 """
 
-def time_to_seconds(self,tmax, unit):
+def time_to_seconds(tmax, unit):
     """
         Conversion between each time unit to seconds
     """
@@ -51,7 +51,7 @@ def time_to_seconds(self,tmax, unit):
         print('UNIT UNKNOWN #s\n', unit)
         return tmax
 
-def time_to_days(self, tmax, unit):
+def time_to_days(tmax, unit):
     sec_in_day = 86400
     min_in_day = 1440
     hour_in_day = 24
@@ -73,7 +73,7 @@ def time_to_days(self, tmax, unit):
             return tmax
 
     elif unit == 'sec':
-        return tmax/self.sec_in_day
+        return tmax/sec_in_day
     elif unit == 'min':
         return tmax / min_in_day
     elif unit == 'hour':
@@ -84,7 +84,7 @@ def time_to_days(self, tmax, unit):
         print('UNIT UNKNOWN #s\n', unit)
         return tmax
 
-def time_to_years(self, tmax, unit):
+def time_to_years(tmax, unit):
     days_in_year = 365
     hours_in_year = 24*days_in_year
     min_in_year = 60*hours_in_year
@@ -117,7 +117,7 @@ def time_to_years(self, tmax, unit):
         print('UNIT UNKNOWN #s\n', unit)
         return tmax
 
-def time_to_hours(self, tmax, unit):
+def time_to_hours(tmax, unit):
     hours_in_day = 24
     hours_in_year = 365*hours_in_day
     min_in_hour = 60

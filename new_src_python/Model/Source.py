@@ -32,38 +32,38 @@ class Source(object):
       self.recharge_type = recharge_type
       self.t, self.tmax, self.tmin = TP.time_properties(tmin, tmax, Nt, unit, time_custom)
       self.period = self.source_terms(period, recharge_type)
-      self.set_recharge_chronicle(self.recharge_rate, self.period)
-
+      self.recharge_chronicle = self.set_recharge_chronicle(recharge_rate, self.period, self.t, recharge_type)
+    
   def source_terms(self, period, recharge_type):
-
+    
       if recharge_type == 'periodical' or recharge_type == 'square':
           if period is None:
               return TU.time_to_seconds(5)
 
-      elif recharge_type == 'steady' or echarge_type is None:
+      elif recharge_type == 'steady' or recharge_type is None:
           return 'inf'
-
+    
       elif recharge_type == 'random':
           return 0
-
+    
       elif recharge_type == 'databased':
           return -1
-
+    
       return self.period
-
-  def set_recharge_chronicle(self, recharge_rate, period, t):
-
-  #        print('time=',self.TP.t)
+    
+  def set_recharge_chronicle(self, recharge_rate, period, t, recharge_type):
+    
+      #        print('time=',self.TP.t)
       if period == 'inf' or period is None:
           recharge_rate = (recharge_rate*10**-3)/86400
           return recharge_rate*np.ones(t)
-
+    
       elif period == 0:
           return self.set_random_recharge()
-
+    
       elif period == -1:
           return recharge_rate
-
+    
       else:
           recharge_rate = (recharge_rate*10**-3)/86400
           if recharge_type == 'periodical':
@@ -79,19 +79,19 @@ class Source(object):
               bool1 = rem_stiff < 60
               recharge_chronicle[bool1] = recharge_rate*((rem_stiff[bool1])/60)
               return recharge_chronicle
-
+    
     ###########################################################################
     #                               GETTERS                                   #
     ###########################################################################
 
-    def get_t(self):
+  def get_t(self):
         return self.t
-
-    def get_recharge(self):
+    
+  def get_recharge(self):
         return self.recharge_chronicle
-
-    def get_recharge_type(self):
+    
+  def get_recharge_type(self):
         return self.recharge_type
-
-    def get_period(self):
+    
+  def get_period(self):
         return self.period

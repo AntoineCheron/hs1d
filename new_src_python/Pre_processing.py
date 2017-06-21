@@ -5,7 +5,7 @@ from Model import SpaceDiscretization as SDU
 from Model import InitialConditions as ICU
 from Utils import Utils
 from Simulation import BoussinesqSimulation as BS
-import SimulationResults as SR
+from Simulation import SimulationResults as SR
 from assimulo.problem import Implicit_Problem
 from assimulo.solvers.sundials import IDA
 
@@ -42,9 +42,14 @@ def process(Morpho, Geol, Hydro, Init=0, Id='Test'):
     SD.soil_depth_node = SD_object.get_soil_depth_node()
     SD.x_node = SD_object.get_x_node()
     SD.dx_node = SD_object.get_dx_node()
+    SD.N_nodes = SD_object.get_N_nodes()
+    SD.N_edges = SD_object.get_N_edges()
+    SD.b = SD_object.get_b()
+    SD.a = SD_object.get_a()
+    SD.omega = SD_object.get_omega()
 
     # Retrieve the Hs1D object
-    HS = SD.get_hs1d()
+    HS = SD_object.get_hs1d()
     Hs1D = Utils.createEmptyObject()
     Hs1D.w_edges = HS.get_w_edges()
     Hs1D.soil_depth_edges = HS.get_soil_depth_edges()
@@ -61,11 +66,11 @@ def process(Morpho, Geol, Hydro, Init=0, Id='Test'):
     # Create the SpaceDiscretization object, containing all the data that
     # we will use accross the program
     BC = Utils.createEmptyObject()
-    BC.edges_bool = BCU.fixed_edge_matrix_boolean(Geol.boundary_value)
+    BC.edges_bool = BCU.fixed_edge_matrix_boolean(Geol.boundary_type)
     BC.edges = BCU.fixed_edge_matrix_values(Geol.boundary_type, Geol.boundary_value)
 
     #Build Initial Conditions
-    IC_object = ICU.InitialConditions(Hydro.perc_loaded, Hs1D.f, BC, SD, Hs1D, SO, Init)
+    IC_object = ICU.InitialConditions(Hydro.perc_loaded, Hs1D.f, Hs1D.k, BC, SD, Hs1D, SO, Init)
     IC = Utils.createEmptyObject()
     IC.sin = IC_object.get_sin()
     IC.qin = IC_object.get_qin()
@@ -76,7 +81,7 @@ def process(Morpho, Geol, Hydro, Init=0, Id='Test'):
     Id
 
     #Mass Matrix of the DAE
-    m = BS.compute_mass_matrix()
+    m = BS.compute_mass_matrix(Hs1D, SD)
 
     # Give all the var we want to Simulate
-    return Morpho, Geol, Hydro, Init, Id, SO, SD, Hs1D, ho, BC, IC, m
+    return Morpho, Geol, Hydro, Init, Id, SO, SD, Hs1D, h0, BC, IC, m
